@@ -20,6 +20,11 @@ namespace TumblThree.Applications
             }
         }
 
+        public ReblogTraceMatcher(string globalSourceBlogs, string blogSourceBlogs)
+            : this((globalSourceBlogs ?? "") + "\n" + (blogSourceBlogs ?? ""))
+        {
+        }
+
         public bool IsEnabled => sources.Count != 0;
 
         public static string ExtractBlogName(string value)

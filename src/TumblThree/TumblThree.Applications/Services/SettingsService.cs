@@ -57,6 +57,9 @@ namespace TumblThree.Applications.Services
             blog.SaveTextsIndividualFiles = shellService.Settings.SaveTextsIndividualFiles;
             blog.ZipCrawlerData = shellService.Settings.ZipCrawlerData;
             blog.VideoAspectRatio = shellService.Settings.VideoAspectRatio;
+            blog.TraceOnlyMatchingReblogs = shellService.Settings.TraceOnlyMatchingReblogs;
+            blog.TraceWriteReport = shellService.Settings.TraceWriteReport;
+            blog.TraceSuggestDiscoveredBlogs = shellService.Settings.TraceSuggestDiscoveredBlogs;
             return blog;
         }
     }

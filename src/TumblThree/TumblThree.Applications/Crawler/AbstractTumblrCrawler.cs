@@ -42,6 +42,7 @@ namespace TumblThree.Applications.Crawler
         protected readonly ILoginService loginService;
         private readonly object traceLock = new object();
         private readonly AsyncLocal<Action<string>> traceDownloaded = new AsyncLocal<Action<string>>();
+        private readonly AsyncLocal<string> traceNotesPostId = new AsyncLocal<string>();
         private ReblogTraceMatcher traceMatcher;
         private ReblogTraceReport traceReport;
 
@@ -50,7 +51,7 @@ namespace TumblThree.Applications.Crawler
             lock (traceLock)
             {
                 if (traceMatcher != null) return;
-                traceMatcher = new ReblogTraceMatcher(Blog.TraceSourceBlogs);
+                traceMatcher = new ReblogTraceMatcher(ShellService.Settings.TraceSourceBlogs, Blog.TraceSourceBlogs);
                 if (!traceMatcher.IsEnabled) return;
                 traceReport = new ReblogTraceReport(Blog.DownloadLocation(), Blog.TraceWriteReport,
                     Blog.TraceSuggestDiscoveredBlogs, traceMatcher, Blog.Name);
@@ -65,6 +66,7 @@ namespace TumblThree.Applications.Crawler
         protected bool CheckReblogTrace(object post)
         {
             traceDownloaded.Value = null;
+            traceNotesPostId.Value = null;
             InitializeReblogTrace();
             if (!traceMatcher.IsEnabled) return true;
             var trace = ReblogTracePost.Read(post);
@@ -76,6 +78,7 @@ namespace TumblThree.Applications.Crawler
                 try
                 {
                     var onDownloaded = traceReport.Record(trace, source);
+                    if (traceReport.Discover) traceNotesPostId.Value = trace.Id;
                     if (onDownloaded != null)
                         traceDownloaded.Value = file =>
                         {
@@ -92,6 +95,52 @@ namespace TumblThree.Applications.Crawler
                 }
             }
             return !Blog.TraceOnlyMatchingReblogs || source != null;
+        }
+
+        protected virtual bool TryGetTraceNotesContext(out string notesApiUrl, out string notesBearerToken, out string notesBlogName)
+        {
+            notesApiUrl = notesBearerToken = notesBlogName = null;
+            return false;
+        }
+
+        // Fetches the reblogging blogs of the post matched by the last CheckReblogTrace call. Never throws.
+        protected async Task FetchTraceNotesAsync()
+        {
+            var postId = traceNotesPostId.Value;
+            traceNotesPostId.Value = null;
+            if (postId == null || traceReport == null || !traceReport.Discover) return;
+            try
+            {
+                if (!TryGetTraceNotesContext(out var notesApiUrl, out var notesBearerToken, out var notesBlogName) ||
+                    string.IsNullOrEmpty(notesApiUrl) || string.IsNullOrEmpty(notesBearerToken) || string.IsNullOrEmpty(notesBlogName))
+                    return;
+                var rebloggers = new List<KeyValuePair<string, string>>();
+                var url = $"{notesApiUrl}/v2/blog/{Uri.EscapeDataString(notesBlogName)}/notes?id={Uri.EscapeDataString(postId)}&mode=reblogs_with_tags";
+                var visited = new HashSet<string>(StringComparer.Ordinal);
+                string[] cookieHosts = { "https://www.tumblr.com/" };
+                while (url != null && visited.Add(url) && visited.Count <= 500)
+                {
+                    if (Ct.IsCancellationRequested) return;
+                    AcquireTimeconstraintSvc();
+                    var json = JObject.Parse(await RequestApiDataAsync(url, notesBearerToken, null, cookieHosts));
+                    var response = json["response"] as JObject ?? json;
+                    foreach (var note in (response["notes"] as JArray ?? new JArray()).OfType<JObject>())
+                    {
+                        var type = (string)note["type"];
+                        var name = (string)note["blog_name"];
+                        if ((type != null && type != "reblog") || string.IsNullOrEmpty(name)) continue;
+                        rebloggers.Add(new KeyValuePair<string, string>(name, (string)note["post_id"] ?? (string)note["id"] ?? ""));
+                    }
+                    var next = (string)response["_links"]?["next"]?["href"];
+                    url = string.IsNullOrEmpty(next) ? null : (next.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? next : notesApiUrl + next);
+                }
+                traceReport.RecordNotedRebloggers(postId, rebloggers);
+            }
+            catch (Exception ex)
+            {
+                if (!Ct.IsCancellationRequested)
+                    Logger.Error("Reblog tracer notes for post {0}: {1}", postId, ex);
+            }
         }
 
         protected override void AddToDownloadList(TumblrPost addToList)

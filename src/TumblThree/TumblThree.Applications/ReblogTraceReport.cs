@@ -11,7 +11,7 @@ namespace TumblThree.Applications
 {
     internal sealed class ReblogTraceReport
     {
-        private const string Header = "post_id,post_url,date,reblogged_from,reblogged_root,matched_source,trail_blogs,downloaded_files";
+        private const string Header = "post_id,post_url,date,reblogged_from,reblogged_root,matched_source,trail_blogs,downloaded_files,noted_rebloggers";
         private readonly string directory;
         private readonly string mutexName;
         private readonly bool writeReport;
@@ -35,7 +35,7 @@ namespace TumblThree.Applications
         {
             id = NormalizeId(id);
             if (writeReport && id != null)
-                Update(new[] { id, "", "", "", "", "seed", "", "" }, null, true);
+                Update(new[] { id, "", "", "", "", "seed", "", "", "" }, null, true);
         }
 
         public Action<string> Record(ReblogTracePost post, string source)
@@ -61,27 +61,54 @@ namespace TumblThree.Applications
             var id = NormalizeId(post.Id);
             if (!writeReport || id == null) return null;
             var row = new[] { id, post.Url, post.Date, post.From, post.Root, source,
-                string.Join(";", post.Trail.Distinct(StringComparer.OrdinalIgnoreCase)), "" };
+                string.Join(";", post.Trail.Distinct(StringComparer.OrdinalIgnoreCase)), "", "" };
             Update(row, null);
             return file => Update(row, file);
         }
 
-        private void Update(string[] row, string downloadedFile, bool isSeed = false)
+        public bool Discover => discover;
+
+        public void RecordNotedRebloggers(string postId, IEnumerable<KeyValuePair<string, string>> rebloggers)
+        {
+            var id = NormalizeId(postId);
+            var list = (rebloggers ?? Enumerable.Empty<KeyValuePair<string, string>>())
+                .Where(r => ReblogTraceMatcher.IsValidBlogName(r.Key) && !matcher.IsSource(r.Key) &&
+                    ReblogTraceMatcher.Normalize(r.Key) != currentBlog).ToList();
+            if (!discover || id == null || list.Count == 0) return;
+            WithWriteLock(() =>
+            {
+                Directory.CreateDirectory(directory);
+                var path = Path.Combine(directory, "trace-discovered-blogs.txt");
+                var names = File.Exists(path) ? File.ReadAllLines(path).ToList() : new List<string>();
+                var keys = new HashSet<string>(names.Select(ReblogTraceMatcher.Normalize), StringComparer.Ordinal);
+                foreach (var reblogger in list)
+                    if (keys.Add(ReblogTraceMatcher.Normalize(reblogger.Key))) names.Add(reblogger.Key);
+                File.WriteAllLines(path, names.OrderBy(n => n, StringComparer.OrdinalIgnoreCase), new UTF8Encoding(false));
+            });
+            if (!writeReport) return;
+            var cell = string.Join(";", list.GroupBy(r => r.Key + ":" + r.Value, StringComparer.OrdinalIgnoreCase)
+                .Select(g => string.IsNullOrEmpty(g.First().Value) ? g.First().Key : g.First().Key + ":" + g.First().Value));
+            Update(new[] { id, "", "", "", "", "", "", "", cell }, null, false, true);
+        }
+
+        private void Update(string[] row, string downloadedFile, bool isSeed = false, bool notedOnly = false)
         {
             WithWriteLock(() =>
             {
                 Directory.CreateDirectory(directory);
                 var path = Path.Combine(directory, "trace-report.csv");
                 var rows = File.Exists(path) ? Parse(File.ReadAllText(path)).Skip(1)
-                    .Where(r => r.Length == 8 && NormalizeId(r[0]) != null)
-                    .Select(r => { r[0] = NormalizeId(r[0]); return r; })
+                    .Where(r => (r.Length == 8 || r.Length == 9) && NormalizeId(r[0]) != null)
+                    .Select(r => { r = r.Length == 8 ? r.Concat(new[] { "" }).ToArray() : r; r[0] = NormalizeId(r[0]); return r; })
                     .GroupBy(r => r[0]).Select(g => g.First()).ToList() : new List<string[]>();
                 var existing = rows.FirstOrDefault(r => r[0] == row[0]);
                 if (existing == null)
                 {
                     existing = (string[])row.Clone();
+                    if (notedOnly) existing[5] = "noted";
                     rows.Add(existing);
                 }
+                else if (notedOnly) existing[8] = row[8] ?? "";
                 else if (!isSeed)
                 {
                     for (var i = 1; i < 7; i++) existing[i] = row[i] ?? "";

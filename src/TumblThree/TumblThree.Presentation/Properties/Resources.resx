@@ -1377,7 +1377,7 @@ enabled, images are requested in the format they have been uploaded.</value>
     <value>Reblog Tracer</value>
   </data>
   <data name="TraceSourceBlogs" xml:space="preserve">
-    <value>Source blogs</value>
+    <value>Extra source blogs (added to global list)</value>
   </data>
   <data name="ToolTipTraceSourceBlogs" xml:space="preserve">
     <value>Enter source blog names or Tumblr URLs, separated by commas or whitespace. Leave empty to disable Reblog Tracer, including filtering, reports and suggestions.</value>
@@ -1390,5 +1390,11 @@ enabled, images are requested in the format they have been uploaded.</value>
   </data>
   <data name="TraceSuggestDiscoveredBlogs" xml:space="preserve">
     <value>Suggest discovered blogs</value>
+  </data>
+  <data name="TraceSourceBlogsGlobal" xml:space="preserve">
+    <value>Source blogs (apply to all blogs)</value>
+  </data>
+  <data name="ToolTipTraceSourceBlogsGlobal" xml:space="preserve">
+    <value>Enter source blog names or Tumblr URLs, separated by commas or whitespace. The list is merged with each blog's own list. Leave both empty to disable Reblog Tracer.</value>
   </data>
 </root>

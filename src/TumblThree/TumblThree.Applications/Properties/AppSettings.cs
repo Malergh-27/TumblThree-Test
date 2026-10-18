@@ -302,6 +302,18 @@ namespace TumblThree.Applications.Properties
         public bool DownloadRebloggedPosts { get; set; }
 
         [DataMember]
+        public string TraceSourceBlogs { get; set; }
+
+        [DataMember]
+        public bool TraceOnlyMatchingReblogs { get; set; }
+
+        [DataMember]
+        public bool TraceWriteReport { get; set; }
+
+        [DataMember]
+        public bool TraceSuggestDiscoveredBlogs { get; set; }
+
+        [DataMember]
         public bool DownloadImgur { get; set; }
 
         [DataMember]
@@ -677,6 +689,10 @@ namespace TumblThree.Applications.Properties
             TumblrBlogCrawlerType = TumblrBlogCrawlerTypes.TumblrSVC;
             PageSize = 50;
             DownloadRebloggedPosts = true;
+            TraceSourceBlogs = string.Empty;
+            TraceOnlyMatchingReblogs = false;
+            TraceWriteReport = false;
+            TraceSuggestDiscoveredBlogs = false;
             AutoDownload = false;
             TimerInterval = "22:40:00";
             ForceSize = false;

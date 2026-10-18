@@ -435,6 +435,14 @@ namespace TumblThree.Applications.Crawler
             return objType.GetProperty(name) != null;
         }
 
+        protected override bool TryGetTraceNotesContext(out string notesApiUrl, out string notesBearerToken, out string notesBlogName)
+        {
+            notesApiUrl = apiUrl;
+            notesBearerToken = bearerToken;
+            notesBlogName = Domain.Models.Blogs.Blog.ExtractName(Blog.Url);
+            return true;
+        }
+
         private async Task DownloadPage(List<Post> posts)
         {
             var lastPostId = GetLastPostId();
@@ -442,7 +450,9 @@ namespace TumblThree.Applications.Crawler
             {
                 if (CheckIfShouldStop()) { break; }
                 CheckIfShouldPause();
-                if (!CheckReblogTrace(post)) { continue; }
+                var tracePassed = CheckReblogTrace(post);
+                await FetchTraceNotesAsync();
+                if (!tracePassed) { continue; }
                 if (lastPostId > 0 && ulong.TryParse(post.Id, out var postId) && postId < lastPostId) { continue; }
                 if (!PostWithinTimespan(post)) { continue; }
                 if (!CheckIfContainsTaggedPost(post)) { continue; }
