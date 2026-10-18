@@ -49,6 +49,8 @@ namespace TumblThree.Presentation.DesignData
 
         public ICommand AddBlogCommand { get; set; }
 
+        public Func<IBlog, CancellationToken, Task> SuggestTraceBlogsAsync { get; set; }
+
         public ICommand ImportBlogsCommand { get; set; }
 
         public ICommand RemoveBlogFromQueueCommand { get; set; }
