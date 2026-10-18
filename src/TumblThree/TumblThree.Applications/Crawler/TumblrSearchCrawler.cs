@@ -58,6 +58,7 @@ namespace TumblThree.Applications.Crawler
 
         public async Task CrawlAsync()
         {
+            InitializeReblogTrace();
             Logger.Verbose("TumblrSearchCrawler.Crawl:Start");
 
             Task crawlerDownloader = Task.CompletedTask;
@@ -263,6 +264,7 @@ namespace TumblThree.Applications.Crawler
                 {
                     if (CheckIfShouldStop()) return;
                     CheckIfShouldPause();
+                    if (!CheckReblogTrace((object)post)) { continue; }
                     try
                     {
                         var objectType = HasProperty(post, "object_type") ? post.object_type : post.objectType;

@@ -54,7 +54,10 @@ namespace TumblThree.Applications.Downloader
             string url = Url(downloadItem);
             url = ResizeTumblrImageUrl(url);
 
-            return await base.DownloadBinaryPostAsync(new PhotoPost(url, downloadItem.PostedUrl, downloadItem.Id, downloadItem.Date, downloadItem.Filename));
+            return await base.DownloadBinaryPostAsync(new PhotoPost(url, downloadItem.PostedUrl, downloadItem.Id, downloadItem.Date, downloadItem.Filename)
+            {
+                TraceDownloaded = downloadItem.TraceDownloaded
+            });
         }
     }
 }

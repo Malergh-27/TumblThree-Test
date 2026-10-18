@@ -43,6 +43,11 @@ namespace TumblThree.Domain.Models.Blogs
         private bool skipGif;
         private bool downloadVideoThumbnail;
         private string tags;
+        private string traceSourceBlogs;
+        private bool traceOnlyMatchingReblogs;
+        private bool traceWriteReport;
+        private bool traceSuggestDiscoveredBlogs;
+        private string traceSeedPostId;
         private int duplicatePhotos;
         private int duplicateVideos;
         private int duplicateAudios;
@@ -324,6 +329,41 @@ namespace TumblThree.Domain.Models.Blogs
         {
             get => tags;
             set => SetProperty(ref tags, value);
+        }
+
+        [DataMember]
+        public string TraceSourceBlogs
+        {
+            get => traceSourceBlogs;
+            set => SetProperty(ref traceSourceBlogs, value);
+        }
+
+        [DataMember]
+        public bool TraceOnlyMatchingReblogs
+        {
+            get => traceOnlyMatchingReblogs;
+            set => SetProperty(ref traceOnlyMatchingReblogs, value);
+        }
+
+        [DataMember]
+        public bool TraceWriteReport
+        {
+            get => traceWriteReport;
+            set => SetProperty(ref traceWriteReport, value);
+        }
+
+        [DataMember]
+        public bool TraceSuggestDiscoveredBlogs
+        {
+            get => traceSuggestDiscoveredBlogs;
+            set => SetProperty(ref traceSuggestDiscoveredBlogs, value);
+        }
+
+        [DataMember]
+        public string TraceSeedPostId
+        {
+            get => traceSeedPostId;
+            set => SetProperty(ref traceSeedPostId, value);
         }
 
         [DataMember]

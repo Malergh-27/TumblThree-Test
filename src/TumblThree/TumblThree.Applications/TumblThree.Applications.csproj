@@ -127,6 +127,9 @@
     <Compile Include="Converter\SingleOrArrayConverter.cs" />
     <Compile Include="CookieParser.cs" />
     <Compile Include="Crawler\AbstractTumblrCrawler.cs" />
+    <Compile Include="ReblogTraceMatcher.cs" />
+    <Compile Include="ReblogTracePost.cs" />
+    <Compile Include="ReblogTraceReport.cs" />
     <Compile Include="Crawler\BlueskyCrawler.cs" />
     <Compile Include="Crawler\NewTumblCrawler.cs" />
     <Compile Include="Crawler\TumblrCommunityCrawler.cs" />

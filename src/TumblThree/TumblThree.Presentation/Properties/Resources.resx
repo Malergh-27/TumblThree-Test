@@ -1373,4 +1373,22 @@ enabled, images are requested in the format they have been uploaded.</value>
   <data name="BlogtypeTumblrCommunity" xml:space="preserve">
     <value>Tumblr Community</value>
   </data>
+  <data name="ReblogTracer" xml:space="preserve">
+    <value>Reblog Tracer</value>
+  </data>
+  <data name="TraceSourceBlogs" xml:space="preserve">
+    <value>Source blogs</value>
+  </data>
+  <data name="ToolTipTraceSourceBlogs" xml:space="preserve">
+    <value>Enter source blog names or Tumblr URLs, separated by commas or whitespace. Leave empty to disable Reblog Tracer, including filtering, reports and suggestions.</value>
+  </data>
+  <data name="TraceOnlyMatchingReblogs" xml:space="preserve">
+    <value>Download only matching reblogs</value>
+  </data>
+  <data name="TraceWriteReport" xml:space="preserve">
+    <value>Write Reblog Tracer report</value>
+  </data>
+  <data name="TraceSuggestDiscoveredBlogs" xml:space="preserve">
+    <value>Suggest discovered blogs</value>
+  </data>
 </root>

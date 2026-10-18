@@ -3626,5 +3626,41 @@ namespace TumblThree.Presentation.Properties {
                 return ResourceManager.GetString("ZipExistingCrawlerData", resourceCulture);
             }
         }
+
+        public static string ReblogTracer {
+            get {
+                return ResourceManager.GetString("ReblogTracer", resourceCulture);
+            }
+        }
+
+        public static string TraceSourceBlogs {
+            get {
+                return ResourceManager.GetString("TraceSourceBlogs", resourceCulture);
+            }
+        }
+
+        public static string ToolTipTraceSourceBlogs {
+            get {
+                return ResourceManager.GetString("ToolTipTraceSourceBlogs", resourceCulture);
+            }
+        }
+
+        public static string TraceOnlyMatchingReblogs {
+            get {
+                return ResourceManager.GetString("TraceOnlyMatchingReblogs", resourceCulture);
+            }
+        }
+
+        public static string TraceWriteReport {
+            get {
+                return ResourceManager.GetString("TraceWriteReport", resourceCulture);
+            }
+        }
+
+        public static string TraceSuggestDiscoveredBlogs {
+            get {
+                return ResourceManager.GetString("TraceSuggestDiscoveredBlogs", resourceCulture);
+            }
+        }
     }
 }

@@ -8,6 +8,8 @@
 
     public abstract class AbstractPost
     {
+        internal System.Action<string> TraceDownloaded { get; set; }
+
         public PostType PostType { get; protected set; }
 
         public string Url { get; protected set; }

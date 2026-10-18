@@ -51,6 +51,7 @@ namespace TumblThree.Applications.Crawler
 
         public async Task CrawlAsync()
         {
+            InitializeReblogTrace();
             Logger.Verbose("TumblrTagSearchCrawler.Crawl:Start");
 
             Task crawlerDownloader = Task.CompletedTask;
@@ -190,6 +191,7 @@ namespace TumblThree.Applications.Crawler
             {
                 foreach (var post in page.Response.Timeline.Elements)
                 {
+                    if (!CheckReblogTrace(post)) { continue; }
                     if (post.OriginalType is null ||
                         !CheckIfWithinTimespan(post.Timestamp))
                     {
@@ -242,6 +244,7 @@ namespace TumblThree.Applications.Crawler
             {
                 foreach (var data in elements)
                 {
+                    if (!CheckReblogTrace(data)) { continue; }
                     if (!string.Equals(data.ObjectType, "Post", StringComparison.InvariantCultureIgnoreCase)) continue;
                     if (!CheckIfWithinTimespan(data.Timestamp))
                     {

@@ -202,6 +202,7 @@
                     Background="{StaticResource DefaultBackground}"
                     SelectedIndex="{Binding BlogFile.SettingsTabIndex}">
                     <TabItem Header="{x:Static p:Resources.BlogSettings}">
+                        <StackPanel>
                         <Grid Margin="0">
                             <Grid.Resources>
                                 <Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="TextBlock">
@@ -659,6 +660,21 @@
                                 </CheckBox.ToolTip>
                             </CheckBox>
                         </Grid>
+                            <GroupBox Header="{x:Static p:Resources.ReblogTracer}" Margin="0,10,0,0">
+                                <StackPanel Margin="5">
+                                    <Label Content="{x:Static p:Resources.TraceSourceBlogs}" />
+                                    <TextBox Text="{Binding BlogFile.TraceSourceBlogs, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                             AcceptsReturn="True" TextWrapping="Wrap" MinHeight="40"
+                                             ToolTip="{x:Static p:Resources.ToolTipTraceSourceBlogs}" />
+                                    <CheckBox Content="{x:Static p:Resources.TraceOnlyMatchingReblogs}"
+                                              IsChecked="{Binding BlogFile.TraceOnlyMatchingReblogs, Mode=TwoWay}" Margin="0,5,0,0" />
+                                    <CheckBox Content="{x:Static p:Resources.TraceWriteReport}"
+                                              IsChecked="{Binding BlogFile.TraceWriteReport, Mode=TwoWay}" Margin="0,5,0,0" />
+                                    <CheckBox Content="{x:Static p:Resources.TraceSuggestDiscoveredBlogs}"
+                                              IsChecked="{Binding BlogFile.TraceSuggestDiscoveredBlogs, Mode=TwoWay}" Margin="0,5,0,0" />
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
                     </TabItem>
                     <TabItem Header="{x:Static p:Resources.Preview}">
                         <Grid>

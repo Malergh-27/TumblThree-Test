@@ -410,6 +410,8 @@ namespace TumblThree.Applications.Downloader
 
                 SetFileDate(fileLocation, postDate);
                 UpdateBlogDB(downloadItem.DbType);
+                if (!blog.DownloadUrlList)
+                    downloadItem.TraceDownloaded?.Invoke(Path.GetFileName(fileLocation));
 
                 //TODO: Refactor
                 if (!shellService.Settings.EnablePreview)
@@ -507,8 +509,16 @@ namespace TumblThree.Applications.Downloader
                 UpdateProgressQueueInformation(Resources.ProgressDownloadImage, postId);
                 if (outputToTextFile(fileLocation, text, blog.MetadataFormat == Domain.Models.MetadataType.Json))
                 {
+                    if (downloadItem.TraceDownloaded != null)
+                    {
+                        lock (lockObjectDownload)
+                        {
+                            if (streamWriters.TryGetValue(fileLocation, out var writer)) writer.Flush();
+                        }
+                    }
                     UpdateBlogDB(downloadItem.DbType);
                     AddTextToDb(downloadItem);
+                    downloadItem.TraceDownloaded?.Invoke(Path.GetFileName(fileLocation));
                 }
             }
         }

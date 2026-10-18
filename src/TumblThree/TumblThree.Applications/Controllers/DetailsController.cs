@@ -223,6 +223,8 @@ namespace TumblThree.Applications.Controllers
         {
             foreach (IBlog blog in _blogsToSave)
             {
+                if (e.PropertyName.StartsWith("Trace", StringComparison.Ordinal) && !IsTraceBlog(blog))
+                    continue;
                 PropertyInfo property = typeof(IBlogAll).GetProperty(e.PropertyName);
                 if (property == null)
                     property = typeof(IBlog).GetProperty(e.PropertyName);
@@ -342,6 +344,14 @@ namespace TumblThree.Applications.Controllers
             ba.DownloadFrom = SetProperty<string>(sharedBlogFiles, "DownloadFrom", (outval) => ba.DownloadFromEnabled = outval);
             ba.DownloadTo = SetProperty<string>(sharedBlogFiles, "DownloadTo", (outval) => ba.DownloadToEnabled = outval);
             ba.Tags = SetProperty<string>(sharedBlogFiles, "Tags", (outval) => ba.TagsEnabled = outval);
+            var traceBlogs = sharedBlogFiles.Where(IsTraceBlog).ToList();
+            if (traceBlogs.Any())
+            {
+                ba.TraceSourceBlogs = SetProperty<string>(traceBlogs, nameof(IBlog.TraceSourceBlogs), (outval) => ba.TraceSourceBlogsEnabled = outval);
+                ba.TraceOnlyMatchingReblogs = SetCheckBox(traceBlogs, nameof(IBlog.TraceOnlyMatchingReblogs));
+                ba.TraceWriteReport = SetCheckBox(traceBlogs, nameof(IBlog.TraceWriteReport));
+                ba.TraceSuggestDiscoveredBlogs = SetCheckBox(traceBlogs, nameof(IBlog.TraceSuggestDiscoveredBlogs));
+            }
             ba.Password = SetProperty<string>(sharedBlogFiles, "Password", (outval) => ba.PasswordEnabled = outval);
             ba.CollectionId = SetProperty<int>(sharedBlogFiles, "CollectionId", (outval) => ba.CollectionIdEnabled = outval);
             bool allEqual = false;
@@ -355,6 +365,7 @@ namespace TumblThree.Applications.Controllers
             ba.FileDownloadLocation = SetProperty<string>(sharedBlogFiles, "FileDownloadLocation", (outval) => allEqual = outval);
             ba.FileDownloadLocationEnabled = false;
             ba.FilenameTemplate = SetProperty<string>(sharedBlogFiles, "FilenameTemplate", (outval) => ba.FilenameTemplateEnabled = outval);
+            ba.SelectionContainsTraceBlogs = traceBlogs.Any();
             ba.SelectionContainsTumblrBlogs = sharedBlogFiles.Any(x => x.BlogType == BlogTypes.tumblr || x.BlogType == BlogTypes.tmblrpriv ||
                 x.BlogType == BlogTypes.tlb || x.BlogType == BlogTypes.tumblrsearch || x.BlogType == BlogTypes.tumblrtagsearch);
             ba.SelectionContainsTwitterBlogs = sharedBlogFiles.Any(x => x.BlogType == BlogTypes.twitter);
@@ -411,6 +422,12 @@ namespace TumblThree.Applications.Controllers
         private static bool CheckIfCanUpdateTumblrBlogCrawler(IBlog blog, PropertyInfo property)
         {
             return property.PropertyType == typeof(BlogTypes) && !(blog is TumblrBlog || blog is TumblrHiddenBlog);
+        }
+
+        private static bool IsTraceBlog(IBlog blog)
+        {
+            return blog is TumblrBlog || blog is TumblrHiddenBlog || blog is TumblrLikedByBlog ||
+                blog is TumblrSearchBlog || blog is TumblrTagSearchBlog || blog is TumblrCommunityBlog;
         }
 
         private void ClearBlogSelection()

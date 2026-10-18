@@ -140,6 +140,7 @@ namespace TumblThree.Applications.Crawler
 
         public async Task CrawlAsync()
         {
+            InitializeReblogTrace();
             Logger.Verbose("TumblrBlogCrawler.Crawl:Start");
 
             ulong highestId = await GetHighestPostIdAsync();
@@ -498,6 +499,7 @@ namespace TumblThree.Applications.Crawler
             {
                 if (CheckIfShouldStop()) { break; }
                 CheckIfShouldPause();
+                if (!CheckReblogTrace(post)) { continue; }
                 if (lastPostId > 0 && ulong.TryParse(post.Id, out var postId) && postId < lastPostId) { continue; }
                 if (!PostWithinTimeSpan(post)) { continue; }
                 if (!CheckIfContainsTaggedPost(post)) { continue; }

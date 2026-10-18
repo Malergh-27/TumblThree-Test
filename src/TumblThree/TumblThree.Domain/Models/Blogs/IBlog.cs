@@ -23,6 +23,16 @@ namespace TumblThree.Domain.Models.Blogs
 
         string Tags { get; set; }
 
+        string TraceSourceBlogs { get; set; }
+
+        bool TraceOnlyMatchingReblogs { get; set; }
+
+        bool TraceWriteReport { get; set; }
+
+        bool TraceSuggestDiscoveredBlogs { get; set; }
+
+        string TraceSeedPostId { get; set; }
+
         int Rating { get; set; }
 
         int Progress { get; set; }

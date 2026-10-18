@@ -13,6 +13,9 @@ namespace TumblThree.Domain.Models.Blogs
         new bool? CreateVideoMeta { get; set; }
         new bool? CreateAudioMeta { get; set; }
         new bool? DownloadRebloggedPosts { get; set; }
+        new bool? TraceOnlyMatchingReblogs { get; set; }
+        new bool? TraceWriteReport { get; set; }
+        new bool? TraceSuggestDiscoveredBlogs { get; set; }
         new bool? DownloadVideoThumbnail { get; set; }
         new bool? SkipGif { get; set; }
         new bool? GroupPhotoSets { get; set; }
@@ -45,6 +48,9 @@ namespace TumblThree.Domain.Models.Blogs
         bool CreateVideoMetaDiff { get; set; }
         bool CreateAudioMetaDiff { get; set; }
         bool DownloadRebloggedPostsDiff { get; set; }
+        bool TraceOnlyMatchingReblogsDiff { get; set; }
+        bool TraceWriteReportDiff { get; set; }
+        bool TraceSuggestDiscoveredBlogsDiff { get; set; }
         bool DownloadVideoThumbnailDiff { get; set; }
         bool SkipGifDiff { get; set; }
         bool GroupPhotoSetsDiff { get; set; }
@@ -72,6 +78,7 @@ namespace TumblThree.Domain.Models.Blogs
         bool DownloadFromEnabled { get; set; }
         bool DownloadToEnabled { get; set; }
         bool TagsEnabled { get; set; }
+        bool TraceSourceBlogsEnabled { get; set; }
         bool PasswordEnabled { get; set; }
         bool FileDownloadLocationEnabled { get; set; }
         bool FilenameTemplateEnabled { get; set; }
@@ -80,6 +87,7 @@ namespace TumblThree.Domain.Models.Blogs
         bool BlogTypeEnabled { get; set; }
         bool CollectionIdEnabled { get; set; }
         bool SelectionContainsTumblrBlogs { get; set; }
+        bool SelectionContainsTraceBlogs { get; set; }
         bool SelectionContainsTwitterBlogs { get; set; }
     }
 }
