@@ -14,7 +14,7 @@ namespace TumblThree.Applications
         {
             foreach (var source in Regex.Split(sourceBlogs ?? "", @"[,\s]+").Where(s => s.Length > 0))
             {
-                var name = ExtractBlogName(source);
+                var name = ExtractBlogName(source.TrimEnd('*')).TrimEnd('*');
                 var key = Normalize(name);
                 if (key.Length > 0 && !sources.ContainsKey(key)) sources.Add(key, name);
             }
@@ -58,13 +58,22 @@ namespace TumblThree.Applications
         {
             foreach (var name in blogNames ?? Enumerable.Empty<string>())
             {
-                string source;
-                if (sources.TryGetValue(Normalize(name), out source)) return source;
+                var source = MatchSource(name);
+                if (source != null) return source;
             }
             return null;
         }
 
-        public bool IsSource(string name) => sources.ContainsKey(Normalize(name));
+        private string MatchSource(string name)
+        {
+            var key = Normalize(name);
+            string source;
+            if (sources.TryGetValue(key, out source)) return source;
+            return sources.Where(entry => key.StartsWith(entry.Key, StringComparison.Ordinal))
+                .OrderByDescending(entry => entry.Key.Length).FirstOrDefault().Value;
+        }
+
+        public bool IsSource(string name) => MatchSource(name) != null;
 
         public static bool IsValidBlogName(string name)
         {
