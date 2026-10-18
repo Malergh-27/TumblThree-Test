@@ -1072,6 +1072,16 @@ namespace TumblThree.Applications.DataModels.TumblrNPF
         [JsonProperty("brokenBlog", NullValueHandling = NullValueHandling.Ignore)]
         public Blog BrokenBlog { get; set; }
 
+        [JsonProperty("brokenBlogName", NullValueHandling = NullValueHandling.Ignore)]
+        public string BrokenBlogName { get; set; }
+
+        [JsonProperty("broken_blog_name", NullValueHandling = NullValueHandling.Ignore)]
+        private string BrokenBlogNameSnake
+        {
+            get { return null; }
+            set { if (BrokenBlogName == null) BrokenBlogName = value; }
+        }
+
         [JsonProperty("post")]
         public Post Post { get; set; }
 

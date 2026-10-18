@@ -295,6 +295,9 @@ namespace TumblThree.Applications.DataModels.TumblrSvcJson
         [DataMember(Name = "broken_blog", EmitDefaultValue = false)]
         public Blog2 BrokenBlog { get; set; }
 
+        [DataMember(Name = "broken_blog_name", EmitDefaultValue = false)]
+        public string BrokenBlogName { get; set; }
+
         [DataMember(Name = "blog", EmitDefaultValue = false)]
         public Blog2 Blog { get; set; }
 

@@ -69,6 +69,8 @@ namespace TumblThree.Applications.Crawler
             if (!traceMatcher.IsEnabled) return true;
             var trace = ReblogTracePost.Read(post);
             var source = traceMatcher.Match(trace.Candidates);
+            Logger.Verbose("Reblog tracer: post {0}, candidates [{1}], match: {2}", trace.Id,
+                string.Join(", ", trace.Candidates), source ?? "none");
             if (source != null)
             {
                 try
@@ -468,6 +470,7 @@ namespace TumblThree.Applications.Crawler
                 RebloggedRootTitle = p.RebloggedRootTitle,
                 Trail = p.Trail?.Select(t => new ReblogTraceTrail
                 {
+                    BrokenBlogName = t.BrokenBlogName,
                     Blog = t.Blog == null ? null : new ReblogTraceBlog { Name = t.Blog.Name, Url = t.Blog.Url, Title = t.Blog.Title },
                     BrokenBlog = t.BrokenBlog == null ? null : new ReblogTraceBlog { Name = t.BrokenBlog.Name, Url = t.BrokenBlog.Url, Title = t.BrokenBlog.Title }
                 }).ToList(),
