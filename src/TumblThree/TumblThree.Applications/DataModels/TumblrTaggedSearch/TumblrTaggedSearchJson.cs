@@ -522,6 +522,24 @@ namespace TumblThree.Applications.DataModels.TumblrTaggedSearchJson
     [DataContract]
     public class TaggedPost
     {
+        [DataMember(Name = "rebloggedFromName", EmitDefaultValue = false)]
+        public string RebloggedFromName { get; set; }
+
+        [DataMember(Name = "rebloggedFromUrl", EmitDefaultValue = false)]
+        public string RebloggedFromUrl { get; set; }
+
+        [DataMember(Name = "rebloggedFromTitle", EmitDefaultValue = false)]
+        public string RebloggedFromTitle { get; set; }
+
+        [DataMember(Name = "rebloggedRootName", EmitDefaultValue = false)]
+        public string RebloggedRootName { get; set; }
+
+        [DataMember(Name = "rebloggedRootUrl", EmitDefaultValue = false)]
+        public string RebloggedRootUrl { get; set; }
+
+        [DataMember(Name = "rebloggedRootTitle", EmitDefaultValue = false)]
+        public string RebloggedRootTitle { get; set; }
+
         [DataMember(Name = "objectType")]
         public string ObjectType { get; set; }
 
@@ -607,7 +625,7 @@ namespace TumblThree.Applications.DataModels.TumblrTaggedSearchJson
         public IList<Layout> Layout { get; set; }
 
         [DataMember(Name = "trail")]
-        public IList<object> Trail { get; set; }
+        public IList<ReblogTraceTrail> Trail { get; set; }
 
         [DataMember(Name = "placementId")]
         public string PlacementId { get; set; }
@@ -652,6 +670,24 @@ namespace TumblThree.Applications.DataModels.TumblrTaggedSearchJson
     [DataContract]
     public class Datum
     {
+        [DataMember(Name = "rebloggedFromName", EmitDefaultValue = false)]
+        public string RebloggedFromName { get; set; }
+
+        [DataMember(Name = "rebloggedFromUrl", EmitDefaultValue = false)]
+        public string RebloggedFromUrl { get; set; }
+
+        [DataMember(Name = "rebloggedFromTitle", EmitDefaultValue = false)]
+        public string RebloggedFromTitle { get; set; }
+
+        [DataMember(Name = "rebloggedRootName", EmitDefaultValue = false)]
+        public string RebloggedRootName { get; set; }
+
+        [DataMember(Name = "rebloggedRootUrl", EmitDefaultValue = false)]
+        public string RebloggedRootUrl { get; set; }
+
+        [DataMember(Name = "rebloggedRootTitle", EmitDefaultValue = false)]
+        public string RebloggedRootTitle { get; set; }
+
         [DataMember(Name = "object_type", EmitDefaultValue = false)]
         public string ObjectType { get; set; }
 
@@ -728,7 +764,7 @@ namespace TumblThree.Applications.DataModels.TumblrTaggedSearchJson
         public IList<object> Layout { get; set; }
 
         [DataMember(Name = "trail", EmitDefaultValue = false)]
-        public IList<object> Trail { get; set; }
+        public IList<ReblogTraceTrail> Trail { get; set; }
 
         [DataMember(Name = "can_edit", EmitDefaultValue = false)]
         public bool CanEdit { get; set; }

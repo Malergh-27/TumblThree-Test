@@ -59,6 +59,11 @@ namespace TumblThree.Applications.Downloader
             _sw.WriteLine(text);
         }
 
+        internal void Flush()
+        {
+            _sw.Flush();
+        }
+
         public void Dispose()
         {
             if (isJson)

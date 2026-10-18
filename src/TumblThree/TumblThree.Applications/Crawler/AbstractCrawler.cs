@@ -343,7 +343,7 @@ namespace TumblThree.Applications.Crawler
             }
         }
 
-        protected void AddToDownloadList(TumblrPost addToList)
+        protected virtual void AddToDownloadList(TumblrPost addToList)
         {
             PostQueue.Add(addToList);
             StatisticsBag.Add(addToList);

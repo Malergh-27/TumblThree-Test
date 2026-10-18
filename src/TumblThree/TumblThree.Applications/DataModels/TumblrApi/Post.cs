@@ -7,6 +7,9 @@ namespace TumblThree.Applications.DataModels.TumblrApiJson
     [DataContract]
     public class Post : ICloneable
     {
+        [DataMember(Name = "trail", EmitDefaultValue = false)]
+        public List<ReblogTraceTrail> Trail { get; set; }
+
         [DataMember(Name = "id", EmitDefaultValue = false)]
         public string Id { get; set; }
 

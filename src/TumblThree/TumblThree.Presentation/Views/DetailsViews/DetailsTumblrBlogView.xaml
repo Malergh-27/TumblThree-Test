@@ -168,6 +168,7 @@
                 <Separator Grid.ColumnSpan="7" Grid.Column="0" Grid.Row="8" Margin="0" />
                 <TabControl x:Name="Tabs" Grid.Column="0" Grid.ColumnSpan="6" Grid.Row="10" SelectedIndex="{Binding BlogFile.SettingsTabIndex}" Background="{StaticResource DefaultBackground}">
                     <TabItem Header="{x:Static p:Resources.BlogSettings}">
+                        <StackPanel>
                         <Grid Margin="0">
                             <Grid.Resources>
                                 <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
@@ -1074,6 +1075,21 @@
                                 </CheckBox.ToolTip>
                             </CheckBox>
                         </Grid>
+                            <GroupBox Header="{x:Static p:Resources.ReblogTracer}" Margin="0,10,0,0">
+                                <StackPanel Margin="5">
+                                    <Label Content="{x:Static p:Resources.TraceSourceBlogs}" />
+                                    <TextBox Text="{Binding BlogFile.TraceSourceBlogs, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                             AcceptsReturn="True" TextWrapping="Wrap" MinHeight="40"
+                                             ToolTip="{x:Static p:Resources.ToolTipTraceSourceBlogs}" />
+                                    <CheckBox Content="{x:Static p:Resources.TraceOnlyMatchingReblogs}"
+                                              IsChecked="{Binding BlogFile.TraceOnlyMatchingReblogs, Mode=TwoWay}" Margin="0,5,0,0" />
+                                    <CheckBox Content="{x:Static p:Resources.TraceWriteReport}"
+                                              IsChecked="{Binding BlogFile.TraceWriteReport, Mode=TwoWay}" Margin="0,5,0,0" />
+                                    <CheckBox Content="{x:Static p:Resources.TraceSuggestDiscoveredBlogs}"
+                                              IsChecked="{Binding BlogFile.TraceSuggestDiscoveredBlogs, Mode=TwoWay}" Margin="0,5,0,0" />
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
                     </TabItem>
                     <TabItem Header="{x:Static p:Resources.ExternalSettings}">
                         <Grid Margin="0">

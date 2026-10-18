@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.Composition;
+﻿using System;
+using System.ComponentModel.Composition;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -26,13 +27,55 @@ namespace TumblThree.Domain.Models
 
         public static bool IsValidTumblrUrlInNewFormat(string url)
         {
-            return CheckNullLengthProtocolAndWhiteSpace(url, 0) && tumblrUrlNew.IsMatch(url);
+            return CheckNullLengthProtocolAndWhiteSpace(url, 0) &&
+                (tumblrUrlNew.IsMatch(url) || TryParseTumblrReblogUrl(url, out _, out _));
         }
 
         public static string GetTumblrNewUrlFormatBlogname(string url)
         {
+            if (TryParseTumblrReblogUrl(url, out var blogName, out _))
+            {
+                return blogName;
+            }
             var match = tumblrUrlNew.Match(url);
             return match.Success ? match.Groups[1].Value : "";
+        }
+
+        public static bool TryParseTumblrReblogUrl(string url, out string blogName, out string postId)
+        {
+            blogName = null;
+            postId = null;
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            {
+                return false;
+            }
+
+            string path = uri.AbsolutePath;
+            Match match;
+            if (uri.Host.Equals("www.tumblr.com", StringComparison.OrdinalIgnoreCase) ||
+                uri.Host.Equals("tumblr.com", StringComparison.OrdinalIgnoreCase))
+            {
+                match = Regex.Match(path, @"^/(?:blog/view/)?(?<blog>[a-zA-Z0-9_-]+)/(?<id>[0-9]+)(?:/[^/]*)?/?$");
+                if (!match.Success || new[] { "dashboard", "likes", "liked", "search", "tagged", "communities", "blog" }
+                    .Contains(match.Groups["blog"].Value, StringComparer.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+                blogName = match.Groups["blog"].Value.ToLowerInvariant();
+            }
+            else
+            {
+                var host = Regex.Match(uri.Host, @"^(?<blog>[a-zA-Z0-9_-]+)\.tumblr\.com$", RegexOptions.IgnoreCase);
+                match = Regex.Match(path, @"^/post/(?<id>[0-9]+)(?:/[^/]*)?/?$");
+                if (!host.Success || !match.Success || host.Groups["blog"].Value.Equals("www", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+                blogName = host.Groups["blog"].Value.ToLowerInvariant();
+            }
+            postId = match.Groups["id"].Value;
+            return true;
         }
 
         public static string CorrectTwitterkUrl(string url)
@@ -43,7 +86,7 @@ namespace TumblThree.Domain.Models
         public bool IsValidTumblrUrl(string url)
         {
             return CheckNullLengthProtocolAndWhiteSpace(url, 18) && !url.Contains(".media.tumblr.com") &&
-                (tumblrUrl.IsMatch(url) || tumblrUrlNew.IsMatch(url));
+                (tumblrUrl.IsMatch(url) || tumblrUrlNew.IsMatch(url) || TryParseTumblrReblogUrl(url, out _, out _));
         }
 
         public bool IsTumbexUrl(string url)

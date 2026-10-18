@@ -60,6 +60,7 @@ namespace TumblThree.Applications.Crawler
 
         public async Task CrawlAsync()
         {
+            InitializeReblogTrace();
             Logger.Verbose("TumblrLikedByCrawler.Crawl:Start");
 
             Task crawlerDownloader = Task.CompletedTask;
@@ -377,6 +378,7 @@ namespace TumblThree.Applications.Crawler
             {
                 if (CheckIfShouldStop()) { break; }
                 CheckIfShouldPause();
+                if (!CheckReblogTrace(post)) { continue; }
                 if (!PostWithinTimespan(post)) { continue; }
 
                 Logger.Verbose("TumblrLikedByCrawler.DownloadPage: {0}", post.PostUrl);
@@ -581,6 +583,8 @@ namespace TumblThree.Applications.Crawler
         
         private async Task AddUrlsToDownloadListAsync(string document)
         {
+            // Legacy likes pages expose no reliable per-post reblog attribution.
+            if (!CheckReblogTrace(null)) return;
             try
             {
                 AddPhotoUrlToDownloadList(document);

@@ -19,6 +19,9 @@ namespace TumblThree.Domain.Models.Blogs
         private bool? createVideoMeta;
         private bool? createAudioMeta;
         private bool? downloadRebloggedPosts;
+        private bool? traceOnlyMatchingReblogs;
+        private bool? traceWriteReport;
+        private bool? traceSuggestDiscoveredBlogs;
         private bool? downloadVideoThumbnail;
         private bool? skipGif;
         private bool? groupPhotoSets;
@@ -51,6 +54,9 @@ namespace TumblThree.Domain.Models.Blogs
         private bool createVideoMetaDiff;
         private bool createAudioMetaDiff;
         private bool downloadRebloggedPostsDiff;
+        private bool traceOnlyMatchingReblogsDiff;
+        private bool traceWriteReportDiff;
+        private bool traceSuggestDiscoveredBlogsDiff;
         private bool downloadVideoThumbnailDiff;
         private bool skipGifDiff;
         private bool groupPhotoSetsDiff;
@@ -79,6 +85,7 @@ namespace TumblThree.Domain.Models.Blogs
         private bool downloadFromEnabled;
         private bool downloadToEnabled;
         private bool tagsEnabled;
+        private bool traceSourceBlogsEnabled;
         private bool passwordEnabled;
         private bool fileDownloadLocationEnabled;
         private bool filenameTemplateEnabled;
@@ -87,6 +94,7 @@ namespace TumblThree.Domain.Models.Blogs
         private bool collectionIdEnabled;
         private bool videoAspectRatioEnabled;
         private bool selectionContainsTumblrBlogs;
+        private bool selectionContainsTraceBlogs;
         private bool selectionContainsTwitterBlogs;
 
         public new bool? DownloadPhoto
@@ -249,6 +257,66 @@ namespace TumblThree.Domain.Models.Blogs
                 DownloadRebloggedPostsDiff = !value.HasValue;
                 SetProperty(ref downloadRebloggedPosts, value);
             }
+        }
+
+        public new bool? TraceOnlyMatchingReblogs
+        {
+            get => traceOnlyMatchingReblogs;
+            set
+            {
+                TraceOnlyMatchingReblogsDiff = !value.HasValue;
+                SetProperty(ref traceOnlyMatchingReblogs, value);
+            }
+        }
+
+        public bool TraceOnlyMatchingReblogsDiff
+        {
+            get => traceOnlyMatchingReblogsDiff;
+            set => SetProperty(ref traceOnlyMatchingReblogsDiff, value);
+        }
+
+        public new bool? TraceWriteReport
+        {
+            get => traceWriteReport;
+            set
+            {
+                TraceWriteReportDiff = !value.HasValue;
+                SetProperty(ref traceWriteReport, value);
+            }
+        }
+
+        public bool TraceWriteReportDiff
+        {
+            get => traceWriteReportDiff;
+            set => SetProperty(ref traceWriteReportDiff, value);
+        }
+
+        public new bool? TraceSuggestDiscoveredBlogs
+        {
+            get => traceSuggestDiscoveredBlogs;
+            set
+            {
+                TraceSuggestDiscoveredBlogsDiff = !value.HasValue;
+                SetProperty(ref traceSuggestDiscoveredBlogs, value);
+            }
+        }
+
+        public bool TraceSuggestDiscoveredBlogsDiff
+        {
+            get => traceSuggestDiscoveredBlogsDiff;
+            set => SetProperty(ref traceSuggestDiscoveredBlogsDiff, value);
+        }
+
+        public bool TraceSourceBlogsEnabled
+        {
+            get => traceSourceBlogsEnabled;
+            set => SetProperty(ref traceSourceBlogsEnabled, value);
+        }
+
+        public bool SelectionContainsTraceBlogs
+        {
+            get => selectionContainsTraceBlogs;
+            set => SetProperty(ref selectionContainsTraceBlogs, value);
         }
 
         public bool DownloadRebloggedPostsDiff

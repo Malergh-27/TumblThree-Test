@@ -40,6 +40,63 @@ namespace TumblThree.Applications.Crawler
         protected readonly ICrawlerDataDownloader crawlerDataDownloader;
         protected readonly IEnvironmentService environmentService;
         protected readonly ILoginService loginService;
+        private readonly object traceLock = new object();
+        private readonly AsyncLocal<Action<string>> traceDownloaded = new AsyncLocal<Action<string>>();
+        private ReblogTraceMatcher traceMatcher;
+        private ReblogTraceReport traceReport;
+
+        protected void InitializeReblogTrace()
+        {
+            lock (traceLock)
+            {
+                if (traceMatcher != null) return;
+                traceMatcher = new ReblogTraceMatcher(Blog.TraceSourceBlogs);
+                if (!traceMatcher.IsEnabled) return;
+                traceReport = new ReblogTraceReport(Blog.DownloadLocation(), Blog.TraceWriteReport,
+                    Blog.TraceSuggestDiscoveredBlogs, traceMatcher, Blog.Name);
+                try { traceReport.Seed(Blog.TraceSeedPostId); }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                {
+                    Logger.Error("Reblog tracer seed report: {0}", ex);
+                }
+            }
+        }
+
+        protected bool CheckReblogTrace(object post)
+        {
+            traceDownloaded.Value = null;
+            InitializeReblogTrace();
+            if (!traceMatcher.IsEnabled) return true;
+            var trace = ReblogTracePost.Read(post);
+            var source = traceMatcher.Match(trace.Candidates);
+            if (source != null)
+            {
+                try
+                {
+                    var onDownloaded = traceReport.Record(trace, source);
+                    if (onDownloaded != null)
+                        traceDownloaded.Value = file =>
+                        {
+                            try { onDownloaded(file); }
+                            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                            {
+                                Logger.Error("Reblog tracer download report: {0}", ex);
+                            }
+                        };
+                }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                {
+                    Logger.Error("Reblog tracer report: {0}", ex);
+                }
+            }
+            return !Blog.TraceOnlyMatchingReblogs || source != null;
+        }
+
+        protected override void AddToDownloadList(TumblrPost addToList)
+        {
+            addToList.TraceDownloaded = traceDownloaded.Value;
+            base.AddToDownloadList(addToList);
+        }
 
         public ITumblrParser TumblrParser { get; }
 
@@ -404,7 +461,16 @@ namespace TumblThree.Applications.Crawler
                 Slug = p.Slug,
                 RegularTitle = p.Title,
                 RebloggedFromName = p.RebloggedFromName,
+                RebloggedFromUrl = p.RebloggedFromUrl,
+                RebloggedFromTitle = p.RebloggedFromTitle,
                 RebloggedRootName = p.RebloggedRootName,
+                RebloggedRootUrl = p.RebloggedRootUrl,
+                RebloggedRootTitle = p.RebloggedRootTitle,
+                Trail = p.Trail?.Select(t => new ReblogTraceTrail
+                {
+                    Blog = t.Blog == null ? null : new ReblogTraceBlog { Name = t.Blog.Name, Url = t.Blog.Url, Title = t.Blog.Title },
+                    BrokenBlog = t.BrokenBlog == null ? null : new ReblogTraceBlog { Name = t.BrokenBlog.Name, Url = t.BrokenBlog.Url, Title = t.BrokenBlog.Title }
+                }).ToList(),
                 ReblogKey = p.ReblogKey,
                 Tumblelog = new TumbleLog2() { Name = p.Tumblelog },
                 // deep copies here prevent inline media from being listed at the end

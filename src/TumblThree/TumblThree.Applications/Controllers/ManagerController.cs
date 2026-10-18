@@ -963,6 +963,14 @@ namespace TumblThree.Applications.Controllers
                 blogUrl = _crawlerService.NewBlogUrl;
             }
 
+            string seedPostId = null;
+            if (UrlValidator.TryParseTumblrReblogUrl(blogUrl != null && !blogUrl.StartsWith("http") ? "https://" + blogUrl : blogUrl,
+                out var seedBlogName, out var parsedPostId))
+            {
+                blogUrl = $"https://{seedBlogName}.tumblr.com/";
+                seedPostId = parsedPostId;
+            }
+
             IBlog blog = await CheckIfCrawlableBlog(blogUrl, fromClipboard);
 
             blog = await CheckIfBlogIsHiddenTumblrBlogAsync(blog);
@@ -975,6 +983,12 @@ namespace TumblThree.Applications.Controllers
                 }
                 SetDefaultTumblrBlogCrawler(blog);
                 blog = _settingsService.TransferGlobalSettingsToBlog(blog);
+                if (seedPostId != null)
+                {
+                    blog.TraceSeedPostId = seedPostId;
+                    blog.TraceOnlyMatchingReblogs = true;
+                    blog.TraceWriteReport = true;
+                }
                 _managerService.EnsureUniqueFolder(blog);
                 SaveBlog(blog);
                 _crawlerService.NewBlogUrl = "";

@@ -152,6 +152,7 @@
                 <Separator Grid.ColumnSpan="7" Grid.Column="0" Grid.Row="8" Margin="0" />
                 <TabControl x:Name="Tabs" Grid.Column="0" Grid.ColumnSpan="6" Grid.Row="10" SelectedIndex="{Binding BlogAll.SettingsTabIndex}" Background="{StaticResource DefaultBackground}">
                     <TabItem Header="{x:Static p:Resources.BlogSettings}">
+                        <StackPanel>
                         <Grid Margin="0">
                             <Grid.Resources>
                                 <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
@@ -1156,6 +1157,25 @@
                                 </CheckBox.ToolTip>
                             </CheckBox>
                         </Grid>
+                            <GroupBox Header="{x:Static p:Resources.ReblogTracer}" Margin="0,10,0,0"
+                                      Visibility="{Binding BlogAll.SelectionContainsTraceBlogs, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <StackPanel Margin="5">
+                                    <Label Content="{x:Static p:Resources.TraceSourceBlogs}" />
+                                    <TextBox Text="{Binding BlogAll.TraceSourceBlogs, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                             AcceptsReturn="True" TextWrapping="Wrap" MinHeight="40"
+                                             ToolTip="{x:Static p:Resources.ToolTipTraceSourceBlogs}" />
+                                    <CheckBox Content="{x:Static p:Resources.TraceOnlyMatchingReblogs}"
+                                              IsChecked="{Binding BlogAll.TraceOnlyMatchingReblogs, Mode=TwoWay}"
+                                              IsThreeState="{Binding BlogAll.TraceOnlyMatchingReblogsDiff, Mode=OneWay}" Margin="0,5,0,0" />
+                                    <CheckBox Content="{x:Static p:Resources.TraceWriteReport}"
+                                              IsChecked="{Binding BlogAll.TraceWriteReport, Mode=TwoWay}"
+                                              IsThreeState="{Binding BlogAll.TraceWriteReportDiff, Mode=OneWay}" Margin="0,5,0,0" />
+                                    <CheckBox Content="{x:Static p:Resources.TraceSuggestDiscoveredBlogs}"
+                                              IsChecked="{Binding BlogAll.TraceSuggestDiscoveredBlogs, Mode=TwoWay}"
+                                              IsThreeState="{Binding BlogAll.TraceSuggestDiscoveredBlogsDiff, Mode=OneWay}" Margin="0,5,0,0" />
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
                     </TabItem>
                     <TabItem Header="{x:Static p:Resources.ExternalSettings}"
                              Visibility="{Binding BlogAll.SelectionContainsTumblrBlogs, Converter={StaticResource BoolToVisibilityConverter}}">

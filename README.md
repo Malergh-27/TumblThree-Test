@@ -48,6 +48,47 @@ It is the code rewrite of [TumblTwo](https://github.com/johanneszab/TumblTwo), u
 * Choice of download format for .pnj links
 </details>
 
+### Reblog Tracer
+
+Select a Tumblr blog and open its details. In **Reblog Tracer**, enter source blog
+names separated by commas or newlines (for example,
+`feenasty, fee-nazty, f33nazty, p0utanaki`). Matching ignores case, hyphens,
+underscores, and Tumblr's `-deactivated` suffix with optional digits. Names are
+matched against the direct reblog source, root source, and available trail blogs;
+source URLs and titles are used when names are missing.
+List spelling aliases separately: `fee-nazty` matches `feenazty`, but not
+`feenasty` unless that name is also listed.
+
+Enable **Only download matching reblogs** to filter downloads, or leave it off
+to report matches while downloading normally. Existing tag, date, and media
+filters still apply. An empty source list disables tracing entirely.
+Enable **Force rescan** to search older posts on a blog you have already crawled,
+especially after changing the source list.
+
+Paste a reblog link into the normal add-blog box to add its blog to the library:
+`https://www.tumblr.com/blog/view/filthydisgustingbastard/166535469424?source=share`.
+The forms `https://<blog>.tumblr.com/post/<postId>` and
+`https://www.tumblr.com/<blog>/<postId>` also work. Query strings are ignored.
+Seed links enable matching-only downloads and reporting, and save the seed post
+ID; enter the source names in the blog's details before starting the crawl.
+The seed identifies a starting point, not a request to crawl only that post.
+
+Enable **Write trace report** to write `trace-report.csv` in the blog's download
+folder, de-duplicated by post ID across runs. Optional **Suggest discovered blogs**
+writes `trace-discovered-blogs.txt` with other blogs seen in matching reblog chains.
+Add those blogs manually and copy the trace settings to explore another hop;
+there is no automatic recursive crawling.
+The report includes a seed marker row and matching posts returned by the crawl,
+even when other download filters exclude their files. `downloaded_files` records
+successful downloads, not queued, failed, or previously skipped files.
+
+Tumblr does not expose a full list of every blog that reblogged a post. Tracing
+can only use metadata returned for the blogs you scan; incomplete trails and
+legacy API responses may hide matches. Private/dashboard-only blogs need login.
+Legacy HTML-only likes lack reliable attribution and are skipped when
+matching-only downloads are enabled.
+Media originally hosted by deleted blogs may no longer be available.
+
 ### Backup/download of <sub><sup>(click names to expand)</sup></sub>
 * <details><summary><b>Blogs / Hidden blogs</b></summary>
   

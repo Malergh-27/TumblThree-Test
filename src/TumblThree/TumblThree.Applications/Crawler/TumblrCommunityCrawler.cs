@@ -161,6 +161,7 @@ namespace TumblThree.Applications.Crawler
 
         public async Task CrawlAsync()
         {
+            InitializeReblogTrace();
             Logger.Verbose("TumblrCommunityCrawler.Crawl:Start");
 
             Task crawlerDownloader = Task.CompletedTask;
@@ -457,6 +458,7 @@ namespace TumblThree.Applications.Crawler
             {
                 if (CheckIfShouldStop()) { break; }
                 CheckIfShouldPause();
+                if (!CheckReblogTrace(post)) { continue; }
                 if (lastPostId > 0 && ulong.TryParse(post.Id, out var postId) && postId < lastPostId) { continue; }
                 if (!PostWithinTimespan(post)) { continue; }
                 if (!CheckIfContainsTaggedPost(post)) { continue; }

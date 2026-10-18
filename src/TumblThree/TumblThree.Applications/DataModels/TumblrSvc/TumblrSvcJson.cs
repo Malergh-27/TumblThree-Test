@@ -245,6 +245,12 @@ namespace TumblThree.Applications.DataModels.TumblrSvcJson
     [DataContract]
     public class Blog2
     {
+        [DataMember(Name = "url", EmitDefaultValue = false)]
+        public string Url { get; set; }
+
+        [DataMember(Name = "title", EmitDefaultValue = false)]
+        public string Title { get; set; }
+
         [DataMember(Name = "name", EmitDefaultValue = false)]
         public string Name { get; set; }
 
@@ -286,6 +292,9 @@ namespace TumblThree.Applications.DataModels.TumblrSvcJson
     [DataContract]
     public class Trail
     {
+        [DataMember(Name = "broken_blog", EmitDefaultValue = false)]
+        public Blog2 BrokenBlog { get; set; }
+
         [DataMember(Name = "blog", EmitDefaultValue = false)]
         public Blog2 Blog { get; set; }
 

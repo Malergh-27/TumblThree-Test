@@ -1609,6 +1609,12 @@ namespace TumblThree.Applications.DataModels.TumblrSearchJson
 
     public class Trail
     {
+        [JsonProperty("brokenBlog")]
+        public Blog BrokenBlog { get; set; }
+
+        [JsonProperty("broken_blog")]
+        private Blog BrokenBlogSnake { set { if (BrokenBlog == null) BrokenBlog = value; } }
+
         [JsonProperty("content")]
         public IList<Content> Content { get; set; }
 
