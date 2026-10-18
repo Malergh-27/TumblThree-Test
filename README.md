@@ -56,6 +56,13 @@ names separated by commas or newlines (for example,
 underscores, and Tumblr's `-deactivated` suffix with optional digits. Names are
 matched against the direct reblog source, root source, and available trail blogs;
 source URLs and titles are used when names are missing.
+Source names are prefixes: `f33nazty` (or `f33nazty*`) matches `f33nazty`,
+`f33nazty-deactivated20160601`, `f33nazty-deactiv`, and any other name beginning
+with that text after normalization, but not `other-f33nazty`. This can also
+match unrelated blogs sharing the prefix; use a longer source name to narrow it.
+Exact matches take priority; otherwise the longest matching source prefix wins.
+An entry containing only `*` is ignored. These same rules exclude source blogs
+from discovered-blog suggestions.
 List spelling aliases separately: `fee-nazty` matches `feenazty`, but not
 `feenasty` unless that name is also listed.
 
@@ -76,8 +83,12 @@ The seed identifies a starting point, not a request to crawl only that post.
 Enable **Write trace report** to write `trace-report.csv` in the blog's download
 folder, de-duplicated by post ID across runs. Optional **Suggest discovered blogs**
 writes `trace-discovered-blogs.txt` with other blogs seen in matching reblog chains.
-Add those blogs manually and copy the trace settings to explore another hop;
-there is no automatic recursive crawling.
+After each traced crawl, a confirmation prompt offers to add discovered blogs to
+the library and download queue, excluding names containing `deact` (case-insensitive)
+and blogs already queued. Each blog is suggested only once per application session.
+New blogs inherit the originating blog's trace settings; existing blogs keep their
+settings. Nothing is added without confirmation, and the discovery file retains
+all names, including deactivated blogs.
 The report includes a seed marker row and matching posts returned by the crawl,
 even when other download filters exclude their files. `downloaded_files` records
 successful downloads, not queued, failed, or previously skipped files.

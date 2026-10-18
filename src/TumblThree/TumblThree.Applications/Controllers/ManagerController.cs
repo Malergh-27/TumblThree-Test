@@ -64,6 +64,8 @@ namespace TumblThree.Applications.Controllers
         private readonly DelegateCommand _visitBlogOnTumbexCommand;
 
         private readonly SemaphoreSlim _addBlogSemaphoreSlim = new SemaphoreSlim(1);
+        private readonly SemaphoreSlim _traceSuggestionSemaphore = new SemaphoreSlim(1);
+        private readonly HashSet<string> _suggestedTraceBlogs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly object _lockObject = new object();
 
         public delegate void BlogManagerFinishedLoadingLibraryHandler(object sender, EventArgs e);
@@ -128,6 +130,7 @@ namespace TumblThree.Applications.Controllers
         {
             _crawlerService.ImportBlogsCommand = _importBlogsCommand;
             _crawlerService.AddBlogCommand = _addBlogCommand;
+            _crawlerService.SuggestTraceBlogsAsync = SuggestTraceBlogsAsync;
             _crawlerService.RemoveBlogCommand = _removeBlogCommand;
             _crawlerService.ShowFilesCommand = _showFilesCommand;
             _crawlerService.EnqueueSelectedCommand = _enqueueSelectedCommand;
@@ -956,7 +959,64 @@ namespace TumblThree.Applications.Controllers
 
         private bool CanCheckStatus() => ManagerViewModel.SelectedBlogFile != null;
 
-        private async Task AddBlogAsync(string blogUrl, bool fromClipboard)
+        private async Task SuggestTraceBlogsAsync(IBlog sourceBlog, CancellationToken cancellationToken)
+        {
+            try { await _traceSuggestionSemaphore.WaitAsync(cancellationToken); }
+            catch (OperationCanceledException) { return; }
+            try
+            {
+                if (cancellationToken.IsCancellationRequested) return;
+                var path = Path.Combine(sourceBlog.DownloadLocation(), "trace-discovered-blogs.txt");
+                if (!File.Exists(path)) return;
+                var matcher = new ReblogTraceMatcher(sourceBlog.TraceSourceBlogs);
+                var names = File.ReadAllLines(path).Select(ReblogTraceMatcher.ExtractBlogName)
+                    .Where(name => ReblogTraceMatcher.IsValidBlogName(name) &&
+                        name.IndexOf("deact", StringComparison.OrdinalIgnoreCase) < 0 &&
+                        !name.Equals(sourceBlog.Name, StringComparison.OrdinalIgnoreCase) && !matcher.IsSource(name))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Where(name => !QueueManager.Items.Any(item => IsTumblrBlogNamed(item.Blog, name)))
+                    .Where(name => _suggestedTraceBlogs.Add(name))
+                    .OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray();
+                if (names.Length == 0 || !_messageService.ShowYesNoQuestion(string.Format(
+                    Resources.SuggestTraceBlogs, sourceBlog.Name, string.Join(Environment.NewLine, names)))) return;
+
+                foreach (var name in names)
+                {
+                    if (cancellationToken.IsCancellationRequested) break;
+                    try
+                    {
+                        var blog = _managerService.BlogFiles.FirstOrDefault(item => IsTumblrBlogNamed(item, name));
+                        if (blog == null)
+                            blog = await AddBlogAsync($"https://{name}.tumblr.com/", false, sourceBlog, cancellationToken);
+                        if (!cancellationToken.IsCancellationRequested && blog != null && blog.Online) Enqueue(new[] { blog });
+                    }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error("ManagerController.SuggestTraceBlogsAsync: {0}", ex);
+                        _shellService.ShowError(ex, Resources.CouldNotAddBlog, ex.Message);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("ManagerController.SuggestTraceBlogsAsync: {0}", ex);
+            }
+            finally
+            {
+                _traceSuggestionSemaphore.Release();
+            }
+        }
+
+        private static bool IsTumblrBlogNamed(IBlog blog, string name) =>
+            (blog.BlogType == BlogTypes.tumblr || blog.BlogType == BlogTypes.tmblrpriv) &&
+            blog.Name.Equals(name, StringComparison.OrdinalIgnoreCase);
+
+        private async Task<IBlog> AddBlogAsync(string blogUrl, bool fromClipboard, IBlog traceSource = null,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrEmpty(blogUrl))
             {
@@ -977,9 +1037,10 @@ namespace TumblThree.Applications.Controllers
 
             lock (_lockObject)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 if (CheckIfBlogAlreadyExists(blog))
                 {
-                    return;
+                    return null;
                 }
                 SetDefaultTumblrBlogCrawler(blog);
                 blog = _settingsService.TransferGlobalSettingsToBlog(blog);
@@ -989,12 +1050,20 @@ namespace TumblThree.Applications.Controllers
                     blog.TraceOnlyMatchingReblogs = true;
                     blog.TraceWriteReport = true;
                 }
+                if (traceSource != null)
+                {
+                    blog.TraceSourceBlogs = traceSource.TraceSourceBlogs;
+                    blog.TraceOnlyMatchingReblogs = traceSource.TraceOnlyMatchingReblogs;
+                    blog.TraceWriteReport = traceSource.TraceWriteReport;
+                    blog.TraceSuggestDiscoveredBlogs = traceSource.TraceSuggestDiscoveredBlogs;
+                }
                 _managerService.EnsureUniqueFolder(blog);
                 SaveBlog(blog);
-                _crawlerService.NewBlogUrl = "";
+                if (traceSource == null) _crawlerService.NewBlogUrl = "";
             }
 
             await UpdateMetaInformationAsync(blog);
+            return _managerService.BlogFiles.Contains(blog) ? blog : null;
         }
 
         private void SetDefaultTumblrBlogCrawler(IBlog blog)

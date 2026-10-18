@@ -16,6 +16,8 @@ namespace TumblThree.Applications.Services
 
         ICommand AddBlogCommand { get; set; }
 
+        Func<IBlog, CancellationToken, Task> SuggestTraceBlogsAsync { get; set; }
+
         ICommand RemoveBlogCommand { get; set; }
 
         ICommand ShowFilesCommand { get; set; }

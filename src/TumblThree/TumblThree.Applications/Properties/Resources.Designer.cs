@@ -68,6 +68,12 @@ namespace TumblThree.Applications.Properties {
                 return ResourceManager.GetString("Answer", resourceCulture);
             }
         }
+
+        public static string SuggestTraceBlogs {
+            get {
+                return ResourceManager.GetString("SuggestTraceBlogs", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to Your application is up to date..
