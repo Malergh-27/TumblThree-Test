@@ -255,6 +255,14 @@ namespace TumblThree.Applications.Crawler
         }
 
         private bool stoppedByUser;
+        private string cachedStartDocument;
+
+        private async Task<string> GetStartDocumentAsync(string startUrl)
+        {
+            var doc = cachedStartDocument ?? await GetSvcPageAsync(startUrl);
+            cachedStartDocument = doc;
+            return doc;
+        }
 
         private void SafeAddNext(string url)
         {
@@ -289,7 +297,7 @@ namespace TumblThree.Applications.Crawler
                 {
                     if (apiUrl == null || bearerToken == null)
                     {
-                        _ = ExtractPosts(await GetSvcPageAsync(startUrl), out var r);
+                        _ = ExtractPosts(await GetStartDocumentAsync(startUrl), out var r);
                         bearerToken = bearerToken ?? r.apiFetchStore.API_TOKEN;
                         apiUrl = apiUrl ?? r.apiUrl;
                     }
@@ -313,7 +321,7 @@ namespace TumblThree.Applications.Crawler
                 var downloadTo = DateTime.ParseExact(Blog.DownloadTo, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None).AddDays(1);
                 long toTs = new DateTimeOffset(downloadTo).ToUnixTimeSeconds();
 
-                var document = await GetSvcPageAsync(startUrl);
+                var document = await GetStartDocumentAsync(startUrl);
                 var firstPosts = ExtractPosts(document, out var result);
                 bearerToken = bearerToken ?? result.apiFetchStore.API_TOKEN;
                 apiUrl = apiUrl ?? result.apiUrl;
@@ -406,7 +414,8 @@ namespace TumblThree.Applications.Crawler
                         document = null;
                         try
                         {
-                            document = await GetSvcPageAsync(url);
+                            var cached = Interlocked.Exchange(ref cachedStartDocument, null);
+                            document = cached != null && url == GetStartUrl() ? cached : await GetSvcPageAsync(url);
                         }
                         catch (WebException webEx)
                         {
