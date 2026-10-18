@@ -249,6 +249,7 @@ namespace TumblThree.Applications.Crawler
 
                 foreach (var url in nextPage.GetConsumingEnumerable(linkedCts.Token))
                 {
+                    timeoutCts.CancelAfter(TimeSpan.FromMinutes(3));
                     try
                     {
                         if (string.IsNullOrEmpty(url))
@@ -332,6 +333,10 @@ namespace TumblThree.Applications.Crawler
             }
             catch (OperationCanceledException)
             {
+                if (timeoutCts != null && timeoutCts.IsCancellationRequested && !Ct.IsCancellationRequested)
+                {
+                    Logger.Information("TumblrHiddenCrawler.CrawlPageAsync: idle timeout fired, no new page for 3 minutes");
+                }
                 incompleteCrawl = true;
             }
             catch (FormatException formatException)
