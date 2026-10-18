@@ -340,7 +340,7 @@ namespace TumblThree.Applications.Controllers
                     using (ct.Register(() => cancelled.TrySetResult(true)))
                     {
                         var suggestions = QueueOnDispatcher.UIDispatcher.InvokeAsync(
-                            () => _crawlerService.SuggestTraceBlogsAsync(blog)).Task.Unwrap();
+                            () => _crawlerService.SuggestTraceBlogsAsync(blog, ct)).Task.Unwrap();
                         if (await Task.WhenAny(suggestions, cancelled.Task) == suggestions)
                             await suggestions;
                     }

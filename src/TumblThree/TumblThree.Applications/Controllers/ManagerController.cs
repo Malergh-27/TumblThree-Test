@@ -959,12 +959,13 @@ namespace TumblThree.Applications.Controllers
 
         private bool CanCheckStatus() => ManagerViewModel.SelectedBlogFile != null;
 
-        private async Task SuggestTraceBlogsAsync(IBlog sourceBlog)
+        private async Task SuggestTraceBlogsAsync(IBlog sourceBlog, CancellationToken cancellationToken)
         {
-            await _traceSuggestionSemaphore.WaitAsync();
+            try { await _traceSuggestionSemaphore.WaitAsync(cancellationToken); }
+            catch (OperationCanceledException) { return; }
             try
             {
-                if (!_crawlerService.IsCrawl) return;
+                if (cancellationToken.IsCancellationRequested) return;
                 var path = Path.Combine(sourceBlog.DownloadLocation(), "trace-discovered-blogs.txt");
                 if (!File.Exists(path)) return;
                 var matcher = new ReblogTraceMatcher(sourceBlog.TraceSourceBlogs);
@@ -981,13 +982,17 @@ namespace TumblThree.Applications.Controllers
 
                 foreach (var name in names)
                 {
-                    if (!_crawlerService.IsCrawl) break;
+                    if (cancellationToken.IsCancellationRequested) break;
                     try
                     {
                         var blog = _managerService.BlogFiles.FirstOrDefault(item => IsTumblrBlogNamed(item, name));
                         if (blog == null)
-                            blog = await AddBlogAsync($"https://{name}.tumblr.com/", false, sourceBlog);
-                        if (_crawlerService.IsCrawl && blog != null && blog.Online) Enqueue(new[] { blog });
+                            blog = await AddBlogAsync($"https://{name}.tumblr.com/", false, sourceBlog, cancellationToken);
+                        if (!cancellationToken.IsCancellationRequested && blog != null && blog.Online) Enqueue(new[] { blog });
+                    }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        break;
                     }
                     catch (Exception ex)
                     {
@@ -1010,7 +1015,8 @@ namespace TumblThree.Applications.Controllers
             (blog.BlogType == BlogTypes.tumblr || blog.BlogType == BlogTypes.tmblrpriv) &&
             blog.Name.Equals(name, StringComparison.OrdinalIgnoreCase);
 
-        private async Task<IBlog> AddBlogAsync(string blogUrl, bool fromClipboard, IBlog traceSource = null)
+        private async Task<IBlog> AddBlogAsync(string blogUrl, bool fromClipboard, IBlog traceSource = null,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrEmpty(blogUrl))
             {
@@ -1031,6 +1037,7 @@ namespace TumblThree.Applications.Controllers
 
             lock (_lockObject)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 if (CheckIfBlogAlreadyExists(blog))
                 {
                     return null;
