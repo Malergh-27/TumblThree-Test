@@ -90,6 +90,12 @@ namespace TumblThree.Applications
                         result.Trail.Add(names[0]);
                         result.Candidates.AddRange(names);
                     }
+                    var brokenName = Text(Get(entry, "BrokenBlogName"));
+                    if (!string.IsNullOrWhiteSpace(brokenName))
+                    {
+                        result.Trail.Add(brokenName);
+                        result.Candidates.Add(brokenName);
+                    }
                 }
             }
             return result;
@@ -104,6 +110,9 @@ namespace TumblThree.Applications
 
         [DataMember(Name = "broken_blog", EmitDefaultValue = false)]
         public ReblogTraceBlog BrokenBlog { get; set; }
+
+        [DataMember(Name = "broken_blog_name", EmitDefaultValue = false)]
+        public string BrokenBlogName { get; set; }
 
         [DataMember(Name = "brokenBlog", EmitDefaultValue = false)]
         private ReblogTraceBlog BrokenBlogCamel
