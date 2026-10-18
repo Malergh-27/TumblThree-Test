@@ -45,6 +45,14 @@ namespace TumblThree.Applications.Crawler
         private string bearerToken;
 
         private bool incompleteCrawl;
+        private bool startedMidStream;
+        private string lastSuccessfulUrl;
+        private readonly object lastUrlLock = new object();
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, int> accessRefusals =
+            new System.Collections.Concurrent.ConcurrentDictionary<string, int>();
+        private static readonly TimeSpan[] AccessRefusedBackoff =
+            { TimeSpan.FromSeconds(30), TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(5) };
+        private const int MaxAccessRefusedRetries = 5;
 
         private SemaphoreSlim semaphoreSlim;
         private List<Task> trackedTasks;
@@ -189,7 +197,7 @@ namespace TumblThree.Applications.Crawler
                 Blog.LastCompleteCrawl = DateTime.Now;
                 if (finishedDownloading && !apiLimitHit)
                 {
-                    Blog.LastId = highestId;
+                    if (!startedMidStream) Blog.LastId = highestId;
                     //            if (DateTime.TryParse(post?.Date, out var latestPost)) Blog.LatestPost = latestPost;
                     if (highestId != 0) Blog.LatestPost = latestPost;
                 }
@@ -219,7 +227,7 @@ namespace TumblThree.Applications.Crawler
 
             GenerateTags();
 
-            nextPage.Add(GetStartUrl());
+            nextPage.Add(await GetInitialUrlAsync());
 
             foreach (int crawlerNumber in Enumerable.Range(0, ShellService.Settings.ConcurrentScans))
             {
@@ -234,7 +242,155 @@ namespace TumblThree.Applications.Crawler
 
             UpdateBlogStats(GetLastPostId() != 0);
 
+            if (incompleteCrawl)
+            {
+                Blog.LastPageUrl = lastSuccessfulUrl ?? Blog.LastPageUrl;
+            }
+            else if (!Ct.IsCancellationRequested && !stoppedByUser)
+            {
+                Blog.LastPageUrl = null;
+            }
+
             return incompleteCrawl;
+        }
+
+        private bool stoppedByUser;
+        private string cachedStartDocument;
+
+        private async Task<string> GetStartDocumentAsync(string startUrl)
+        {
+            var doc = cachedStartDocument ?? await GetSvcPageAsync(startUrl);
+            cachedStartDocument = doc;
+            return doc;
+        }
+
+        private void SafeAddNext(string url)
+        {
+            try
+            {
+                nextPage.Add(url);
+            }
+            catch (InvalidOperationException)
+            {
+                // queue already completed by another worker
+            }
+        }
+
+        private void SafeCompleteNext()
+        {
+            try
+            {
+                nextPage.CompleteAdding();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+        }
+
+        private async Task<string> GetInitialUrlAsync()
+        {
+            var startUrl = GetStartUrl();
+
+            if (!Blog.ForceRescan && string.IsNullOrEmpty(Blog.DownloadPages) && !string.IsNullOrEmpty(Blog.LastPageUrl))
+            {
+                try
+                {
+                    if (apiUrl == null || bearerToken == null)
+                    {
+                        _ = ExtractPosts(await GetStartDocumentAsync(startUrl), out var r);
+                        bearerToken = bearerToken ?? r.apiFetchStore.API_TOKEN;
+                        apiUrl = apiUrl ?? r.apiUrl;
+                    }
+                    startedMidStream = true;
+                    Logger.Information("TumblrHiddenCrawler: resuming {0} from {1}", Blog.Name, Blog.LastPageUrl);
+                    return Blog.LastPageUrl;
+                }
+                catch (Exception ex) when (!(ex is OperationCanceledException))
+                {
+                    Logger.Warning("TumblrHiddenCrawler: could not resume, starting over: {0}", ex.Message);
+                }
+            }
+
+            if (string.IsNullOrEmpty(Blog.DownloadTo) || !string.IsNullOrEmpty(Blog.DownloadPages))
+            {
+                return startUrl;
+            }
+
+            try
+            {
+                var downloadTo = DateTime.ParseExact(Blog.DownloadTo, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None).AddDays(1);
+                long toTs = new DateTimeOffset(downloadTo).ToUnixTimeSeconds();
+
+                var document = await GetStartDocumentAsync(startUrl);
+                var firstPosts = ExtractPosts(document, out var result);
+                bearerToken = bearerToken ?? result.apiFetchStore.API_TOKEN;
+                apiUrl = apiUrl ?? result.apiUrl;
+
+                // newest post is already older than "To": nothing to skip
+                var newest = firstPosts.FirstOrDefault(x => !x.IsPinned);
+                if (newest == null || newest.Timestamp < toTs || !(HasProperty(result, "PeeprRoute")
+                    ? HasProperty(result.PeeprRoute.initialTimeline, "nextLink") : HasProperty(result, "response") && HasProperty(result.response, "_links")))
+                {
+                    return startUrl;
+                }
+
+                string href = (string)(HasProperty(result, "PeeprRoute") ? result.PeeprRoute.initialTimeline.nextLink.href : result.response._links.next.href);
+                var jumpUrl = SetQueryParameter(apiUrl + href, "before", toTs.ToString(CultureInfo.InvariantCulture));
+
+                // verify the endpoint honours "before"; otherwise fall back to cursor paging from the top
+                var jumpPosts = ExtractPosts(await GetSvcPageAsync(jumpUrl), out _);
+                var first = jumpPosts.FirstOrDefault(x => !x.IsPinned);
+                if (first != null && first.Timestamp < toTs)
+                {
+                    startedMidStream = true;
+                    Logger.Information("TumblrHiddenCrawler: jumping to posts before {0}", Blog.DownloadTo);
+                    return jumpUrl;
+                }
+            }
+            catch (Exception ex) when (!(ex is OperationCanceledException))
+            {
+                Logger.Warning("TumblrHiddenCrawler: date jump unavailable, paging from newest post: {0}", ex.Message);
+            }
+
+            return startUrl;
+        }
+
+        private static string SetQueryParameter(string url, string key, string value)
+        {
+            var uri = new Uri(url);
+            var query = HttpUtility.ParseQueryString(uri.Query);
+            query.Set(key, value);
+            return uri.GetLeftPart(UriPartial.Path) + "?" + query;
+        }
+
+        private static bool IsAccessRefused(WebException ex)
+        {
+            var code = (ex?.Response as HttpWebResponse)?.StatusCode;
+            return code == HttpStatusCode.Forbidden || code == HttpStatusCode.Unauthorized;
+        }
+
+        private async Task<bool> WaitOrGiveUpOnAccessRefusedAsync(string url, CancellationTokenSource timeoutCts)
+        {
+            int attempt = accessRefusals.AddOrUpdate(url, 1, (_, n) => n + 1);
+            if (attempt > MaxAccessRefusedRetries)
+            {
+                Logger.Error("TumblrHiddenCrawler: access refused for {0}, giving up after {1} retries", url, MaxAccessRefusedRetries);
+                ShellService.ShowError(new Exception(Resources.TumblrAccessRefused), Resources.TumblrAccessRefused);
+                return false;
+            }
+
+            if (attempt == 1)
+            {
+                await FetchCookiesAgainAsync();
+                return true;
+            }
+
+            var delay = AccessRefusedBackoff[Math.Min(attempt - 2, AccessRefusedBackoff.Length - 1)];
+            Logger.Warning("TumblrHiddenCrawler: access refused, retry {0}/{1} in {2}", attempt, MaxAccessRefusedRetries, delay);
+            timeoutCts.CancelAfter(Timeout.InfiniteTimeSpan);
+            await Task.Delay(delay, Ct);
+            timeoutCts.CancelAfter(TimeSpan.FromMinutes(3));
+            return true;
         }
 
         private async Task CrawlPageAsync(int crawlerNumber)
@@ -258,7 +414,8 @@ namespace TumblThree.Applications.Crawler
                         document = null;
                         try
                         {
-                            document = await GetSvcPageAsync(url);
+                            var cached = Interlocked.Exchange(ref cachedStartDocument, null);
+                            document = cached != null && url == GetStartUrl() ? cached : await GetSvcPageAsync(url);
                         }
                         catch (WebException webEx)
                         {
@@ -278,9 +435,11 @@ namespace TumblThree.Applications.Crawler
                         bearerToken = bearerToken ?? result.apiFetchStore.API_TOKEN;
                         apiUrl = apiUrl ?? result.apiUrl;
 
+                        accessRefusals.TryRemove(url, out _);
+
                         if (!posts.Any())
                         {
-                            nextPage.CompleteAdding();
+                            SafeCompleteNext();
                             return;
                         }
 
@@ -293,41 +452,50 @@ namespace TumblThree.Applications.Crawler
                         if (HasProperty(result, "PeeprRoute") && !HasProperty(result.PeeprRoute.initialTimeline, "nextLink") ||
                             HasProperty(result, "response") && !HasProperty(result.response, "_links"))
                         {
-                            nextPage.CompleteAdding();
+                            SafeCompleteNext();
                         }
                         else
                         {
                             var nextLink = apiUrl + (string)(HasProperty(result, "PeeprRoute") ?
                                 result.PeeprRoute.initialTimeline.nextLink.href : result.response._links.next.href);
-                            nextPage.Add(nextLink);
+                            SafeAddNext(nextLink);
                         }
 
-                        if (CheckIfShouldStop()) { return; }
+                        if (CheckIfShouldStop()) { stoppedByUser = true; SafeCompleteNext(); return; }
 
                         CheckIfShouldPause();
 
-                        if (!CheckPostAge(posts)) { return; }
+                        if (!startedMidStream && !CheckPostAge(posts)) { SafeCompleteNext(); return; }
 
                         await DownloadPage(posts);
+
+                        lock (lastUrlLock) { lastSuccessfulUrl = url; }
 
                         Interlocked.Increment(ref numberOfPagesCrawled);
                         UpdateProgressQueueInformation(Resources.ProgressGetUrlShort, numberOfPagesCrawled);
                     }
                     catch (WebException webException)
                     {
-                        if (HandleLimitExceededWebException(webException) ||
-                            HandleUnauthorizedWebExceptionRetry(webException))
-                        {
-                            incompleteCrawl = true;
-                        }
                         incompleteCrawl = true;
-                        nextPage.Add(url);
+                        if (IsAccessRefused(webException))
+                        {
+                            if (!await WaitOrGiveUpOnAccessRefusedAsync(url, timeoutCts))
+                            {
+                                SafeCompleteNext();
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            HandleLimitExceededWebException(webException);
+                        }
+                        SafeAddNext(url);
                     }
                     catch (TimeoutException timeoutException)
                     {
                         HandleTimeoutException(timeoutException, Resources.Crawling);
                         incompleteCrawl = true;
-                        nextPage.Add(url);
+                        SafeAddNext(url);
                     }
                 }
             }

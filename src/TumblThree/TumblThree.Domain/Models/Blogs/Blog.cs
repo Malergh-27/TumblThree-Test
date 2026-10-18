@@ -802,6 +802,9 @@ namespace TumblThree.Domain.Models.Blogs
         public ulong LastId { get; set; }
 
         [DataMember]
+        public string LastPageUrl { get; set; }
+
+        [DataMember]
         public bool SkipGif
         {
             get => skipGif;
