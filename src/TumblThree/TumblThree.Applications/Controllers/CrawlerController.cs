@@ -333,6 +333,18 @@ namespace TumblThree.Applications.Controllers
                 queueListItem.InterruptionRequested += crawler.InterruptionRequestedEventHandler;
                 await crawler.CrawlAsync();
                 blog.UpdateProgress(false);
+                if (!ct.IsCancellationRequested && blog.TraceSuggestDiscoveredBlogs &&
+                    new ReblogTraceMatcher(blog.TraceSourceBlogs).IsEnabled && _crawlerService.SuggestTraceBlogsAsync != null)
+                {
+                    var cancelled = new TaskCompletionSource<bool>();
+                    using (ct.Register(() => cancelled.TrySetResult(true)))
+                    {
+                        var suggestions = QueueOnDispatcher.UIDispatcher.InvokeAsync(
+                            () => _crawlerService.SuggestTraceBlogsAsync(blog)).Task.Unwrap();
+                        if (await Task.WhenAny(suggestions, cancelled.Task) == suggestions)
+                            await suggestions;
+                    }
+                }
             }
             catch (Exception e)
             {

@@ -67,6 +67,12 @@ namespace TumblThree.Applications.Properties {
             get {
                 return ResourceManager.GetString("Answer", resourceCulture);
             }
+
+            public static string SuggestTraceBlogs {
+                get {
+                    return ResourceManager.GetString("SuggestTraceBlogs", resourceCulture);
+                }
+            }
         }
         
         /// <summary>

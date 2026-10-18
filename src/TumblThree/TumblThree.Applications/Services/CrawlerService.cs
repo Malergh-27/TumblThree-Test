@@ -153,6 +153,8 @@ namespace TumblThree.Applications.Services
 
         public IReadOnlyObservableList<QueueListItem> ActiveItems => _readonlyActiveItems;
 
+        public Func<IBlog, Task> SuggestTraceBlogsAsync { get; set; }
+
         public ICommand ImportBlogsCommand
         {
             get => _importBlogsCommand;
