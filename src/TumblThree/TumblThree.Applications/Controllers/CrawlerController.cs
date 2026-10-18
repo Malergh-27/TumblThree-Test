@@ -334,7 +334,7 @@ namespace TumblThree.Applications.Controllers
                 await crawler.CrawlAsync();
                 blog.UpdateProgress(false);
                 if (!ct.IsCancellationRequested && blog.TraceSuggestDiscoveredBlogs &&
-                    new ReblogTraceMatcher(blog.TraceSourceBlogs).IsEnabled && _crawlerService.SuggestTraceBlogsAsync != null)
+                    new ReblogTraceMatcher(_shellService.Settings.TraceSourceBlogs, blog.TraceSourceBlogs).IsEnabled && _crawlerService.SuggestTraceBlogsAsync != null)
                 {
                     var cancelled = new TaskCompletionSource<bool>();
                     using (ct.Register(() => cancelled.TrySetResult(true)))

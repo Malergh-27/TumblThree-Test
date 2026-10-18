@@ -74,6 +74,10 @@ namespace TumblThree.Applications.ViewModels
         private string _downloadTo;
         private string _tags;
         private bool _downloadRebloggedPosts;
+        private string _traceSourceBlogs;
+        private bool _traceOnlyMatchingReblogs;
+        private bool _traceWriteReport;
+        private bool _traceSuggestDiscoveredBlogs;
         private bool _deleteOnlyIndex;
         private bool _archiveIndex;
         private bool _downloadAudios;
@@ -890,6 +894,30 @@ namespace TumblThree.Applications.ViewModels
             set => SetProperty(ref _downloadRebloggedPosts, value);
         }
 
+        public string TraceSourceBlogs
+        {
+            get => _traceSourceBlogs;
+            set => SetProperty(ref _traceSourceBlogs, value);
+        }
+
+        public bool TraceOnlyMatchingReblogs
+        {
+            get => _traceOnlyMatchingReblogs;
+            set => SetProperty(ref _traceOnlyMatchingReblogs, value);
+        }
+
+        public bool TraceWriteReport
+        {
+            get => _traceWriteReport;
+            set => SetProperty(ref _traceWriteReport, value);
+        }
+
+        public bool TraceSuggestDiscoveredBlogs
+        {
+            get => _traceSuggestDiscoveredBlogs;
+            set => SetProperty(ref _traceSuggestDiscoveredBlogs, value);
+        }
+
         public string TimerInterval
         {
             get => _timerInterval;
@@ -1408,6 +1436,10 @@ namespace TumblThree.Applications.ViewModels
                 UguuType = _settings.UguuType;
                 CatBoxType = _settings.CatBoxType;
                 DownloadRebloggedPosts = _settings.DownloadRebloggedPosts;
+                TraceSourceBlogs = _settings.TraceSourceBlogs ?? string.Empty;
+                TraceOnlyMatchingReblogs = _settings.TraceOnlyMatchingReblogs;
+                TraceWriteReport = _settings.TraceWriteReport;
+                TraceSuggestDiscoveredBlogs = _settings.TraceSuggestDiscoveredBlogs;
                 AutoDownload = _settings.AutoDownload;
                 ForceSize = _settings.ForceSize;
                 ForceRescan = _settings.ForceRescan;
@@ -1515,6 +1547,10 @@ namespace TumblThree.Applications.ViewModels
                 UguuType = UguuTypes.Any;
                 CatBoxType = CatBoxTypes.Any;
                 DownloadRebloggedPosts = true;
+                TraceSourceBlogs = string.Empty;
+                TraceOnlyMatchingReblogs = false;
+                TraceWriteReport = false;
+                TraceSuggestDiscoveredBlogs = false;
                 AutoDownload = false;
                 ForceSize = false;
                 ForceRescan = false;
@@ -1697,6 +1733,10 @@ namespace TumblThree.Applications.ViewModels
             _settings.DownloadTo = DownloadTo;
             _settings.Tags = Tags;
             _settings.DownloadRebloggedPosts = DownloadRebloggedPosts;
+            _settings.TraceSourceBlogs = TraceSourceBlogs ?? string.Empty;
+            _settings.TraceOnlyMatchingReblogs = TraceOnlyMatchingReblogs;
+            _settings.TraceWriteReport = TraceWriteReport;
+            _settings.TraceSuggestDiscoveredBlogs = TraceSuggestDiscoveredBlogs;
             _settings.ApiKey = ApiKey;
             _settings.SecretKey = SecretKey;
             _settings.OAuthToken = OAuthToken;

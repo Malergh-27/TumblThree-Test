@@ -3633,6 +3633,18 @@ namespace TumblThree.Presentation.Properties {
             }
         }
 
+        public static string TraceSourceBlogsGlobal {
+            get {
+                return ResourceManager.GetString("TraceSourceBlogsGlobal", resourceCulture);
+            }
+        }
+
+        public static string ToolTipTraceSourceBlogsGlobal {
+            get {
+                return ResourceManager.GetString("ToolTipTraceSourceBlogsGlobal", resourceCulture);
+            }
+        }
+
         public static string TraceSourceBlogs {
             get {
                 return ResourceManager.GetString("TraceSourceBlogs", resourceCulture);

@@ -968,7 +968,7 @@ namespace TumblThree.Applications.Controllers
                 if (cancellationToken.IsCancellationRequested) return;
                 var path = Path.Combine(sourceBlog.DownloadLocation(), "trace-discovered-blogs.txt");
                 if (!File.Exists(path)) return;
-                var matcher = new ReblogTraceMatcher(sourceBlog.TraceSourceBlogs);
+                var matcher = new ReblogTraceMatcher(_shellService.Settings.TraceSourceBlogs, sourceBlog.TraceSourceBlogs);
                 var names = File.ReadAllLines(path).Select(ReblogTraceMatcher.ExtractBlogName)
                     .Where(name => ReblogTraceMatcher.IsValidBlogName(name) &&
                         name.IndexOf("deact", StringComparison.OrdinalIgnoreCase) < 0 &&
