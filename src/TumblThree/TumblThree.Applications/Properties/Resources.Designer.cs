@@ -123,6 +123,15 @@ namespace TumblThree.Applications.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Tumblr refused access (403), try again later or re-authenticate.
+        /// </summary>
+        public static string TumblrAccessRefused {
+            get {
+                return ResourceManager.GetString("TumblrAccessRefused", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Auth error (trying to continue): {0}.
         /// </summary>
         public static string AuthErrorRetrying {

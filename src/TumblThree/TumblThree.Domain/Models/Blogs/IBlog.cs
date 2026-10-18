@@ -21,6 +21,8 @@ namespace TumblThree.Domain.Models.Blogs
 
         ulong LastId { get; set; }
 
+        string LastPageUrl { get; set; }
+
         string Tags { get; set; }
 
         string TraceSourceBlogs { get; set; }
